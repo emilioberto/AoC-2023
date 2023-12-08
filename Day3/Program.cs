@@ -22,7 +22,6 @@ for (var i = 0; i < matrix.Length; i++)
 
     var isDigit = new Regex($@"\d");
     var allNumbers = new Regex(@"\d+");
-    // var notPartNumbers = new Regex(@"([\d|\.][\.][\d|\.])([\d|\.][\d][\d|\.])+([\d|\.][\.][\d|\.])");
     var notPartNumbers = new Regex(@"(?<=([\d|\.][\.][\d|\.]))([\d|\.][\d][\d|\.])+(?=([\d|\.][\.][\d|\.]))");
 
     var builder = new StringBuilder().Append("...");
@@ -54,6 +53,7 @@ for (var i = 0; i < matrix.Length; i++)
         // Console.WriteLine($"Sottraggo {matchStringValue}");
         part1Result -= long.Parse(matchStringValue);
     }
+    
 }
 
 Console.WriteLine($"Part 1 result: {part1Result}");
