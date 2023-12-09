@@ -50,14 +50,6 @@ var almanac = maps.Select((mapCapture, index) =>
         });
     }
 
-    foreach (var rule in map.MapRules)
-    {
-        // for (int i = 0; i < rule.Range; i++)
-        // {
-        //     map.Mapping.Add(new(rule.SourceStart + i, rule.DestinationStart + i));
-        // }
-    }
-
     return map;
 }).ToArray();
 
@@ -85,26 +77,23 @@ part1Result = locationResults.Min();
 
 Console.WriteLine($"Part 1 result: {part1Result}");
 
-var part2SeedNumbers = new List<long>();
-
+var part2SeedNumbers = new List<(long, long)>();
 for (long i = 0; i < seedNumbers.Length - 1; i += 2)
 {
-    for (int j = 0; j < seedNumbers[i + 1]; j++)
-    {
-        part2SeedNumbers.Add(seedNumbers[i]+j);
-    }
+    part2SeedNumbers.Add(new ValueTuple<long, long>(seedNumbers[i], seedNumbers[i] + (seedNumbers[i + 1] - 1)));
 }
 
-var part2LocationResults = part2SeedNumbers.Select(seedNumber =>
+var part2LocationResults = part2SeedNumbers.Select(seedNumbersRange =>
 {
     var conversionMap = almanac.Single(e => e.From == "seed");
-    var result = seedNumber;
+    var result = seedNumbersRange.Item1;
 
     while (conversionMap is not null)
     {
         var existingMapping = conversionMap.MapRules.SingleOrDefault(e => result >= e.SourceStart && result <= e.SourceStart + e.Range - 1);
         if (existingMapping is not null)
         {
+
             var offset = existingMapping.DestinationStart - existingMapping.SourceStart;
             result += offset;
         }
