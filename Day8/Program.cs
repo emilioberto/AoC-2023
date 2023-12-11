@@ -44,33 +44,7 @@ for (var i = 0; i < nodes.Length; i++)
 //     }
 // }
 
-
 Console.WriteLine($"Part 1: {part1Result}");
-
-//
-// var startingNodes = nodeMap.Where(e => e.Name.EndsWith("A")).ToArray();
-// while (startingNodes.Any(node => !node.Name.EndsWith("Z")))
-// {
-//     foreach (var instruction in instructions)
-//     {
-//         part2Result++;
-//
-//         for (int i = 0; i < startingNodes.Length; i++)
-//         {
-//             var nthNode = startingNodes[i];
-//
-//             startingNodes[i] = instruction is "L"
-//                 ? nodeMap.First(e => e.Name == nthNode.Left)
-//                 : nodeMap.First(e => e.Name == nthNode.Right);
-//         }
-//
-//         if (startingNodes.All(node => node.Name.EndsWith("Z")))
-//         {
-//             break;
-//         }
-//     }
-// }
-
 
 var startingNodes = nodeMap.Where(e => e.Name.EndsWith("A")).ToArray();
 var results = new List<long>();
@@ -95,12 +69,9 @@ for (int i = 0; i < startingNodes.Length; i++)
     }
 }
 
-Console.WriteLine(string.Join(", ", results));
+part2Result = CalculateLCM(results.ToArray());
 
-Console.WriteLine(CalculateLCM(results.ToArray()));
-
-// Provare cercando il minimo divisore delle iterazioni che portano a Z per ogni nodo
-
+// TODO: Provare cercando il minimo divisore delle iterazioni che portano a Z per ogni nodo
 Console.WriteLine($"Part 2: {part2Result}");
 
 record MapNode
