@@ -50,6 +50,14 @@ var almanac = maps.Select((mapCapture, index) =>
         });
     }
 
+    foreach (var rule in map.MapRules)
+    {
+        // for (int i = 0; i < rule.Range; i++)
+        // {
+        //     map.Mapping.Add(new(rule.SourceStart + i, rule.DestinationStart + i));
+        // }
+    }
+
     return map;
 }).ToArray();
 
@@ -76,24 +84,30 @@ var locationResults = seedNumbers.Select(seedNumber =>
 part1Result = locationResults.Min();
 
 Console.WriteLine($"Part 1 result: {part1Result}");
+// ------
+// PART 2
+// ------
 
-var part2SeedNumbers = new List<(long, long)>();
+var part2SeedNumbers = new List<long>();
+
 for (long i = 0; i < seedNumbers.Length - 1; i += 2)
 {
-    part2SeedNumbers.Add(new ValueTuple<long, long>(seedNumbers[i], seedNumbers[i] + (seedNumbers[i + 1] - 1)));
+    for (int j = 0; j < seedNumbers[i + 1]; j++)
+    {
+        part2SeedNumbers.Add(seedNumbers[i]+j);
+    }
 }
 
-var part2LocationResults = part2SeedNumbers.Select(seedNumbersRange =>
+var part2LocationResults = part2SeedNumbers.Select(seedNumber =>
 {
     var conversionMap = almanac.Single(e => e.From == "seed");
-    var result = seedNumbersRange.Item1;
+    var result = seedNumber;
 
     while (conversionMap is not null)
     {
         var existingMapping = conversionMap.MapRules.SingleOrDefault(e => result >= e.SourceStart && result <= e.SourceStart + e.Range - 1);
         if (existingMapping is not null)
         {
-
             var offset = existingMapping.DestinationStart - existingMapping.SourceStart;
             result += offset;
         }
@@ -101,10 +115,10 @@ var part2LocationResults = part2SeedNumbers.Select(seedNumbersRange =>
         conversionMap = almanac.SingleOrDefault(e => e.From == conversionMap.To);
     }
 
-    return result;
-}).ToArray();
+    conversionMap = almanac.Single(e => e.From == "seed");
+    mappings.Add(tempMappings);
+}
 
-part2Result = part2LocationResults.Min();
 
 Console.WriteLine($"Part 2 result: {part2Result}");
 
@@ -114,7 +128,6 @@ record Map
     public string To { get; set; }
 
     public List<MapRule> MapRules { get; set; } = new();
-    // public List<(long source, long destination)> Mapping { get; set; } = new();
 }
 
 record MapRule
