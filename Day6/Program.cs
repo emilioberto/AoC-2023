@@ -5,9 +5,9 @@ var filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "input.txt");
 long part1Result = 0;
 long part2Result = 0;
 
-var part1Regex = new Regex(@"Time:\s*(?<Time>(\d+)\s+)+[\r\n]*Distance:\s*(?<Distance>(\d+)\s+)+");
+var timeAndDistanceRegex = new Regex(@"Time:\s*(?<Time>(\d+)\s+)+[\r\n]*Distance:\s*(?<Distance>(\d+)\s+)+");
 
-var match = part1Regex.Match(await File.ReadAllTextAsync(filePath));
+var match = timeAndDistanceRegex.Match(await File.ReadAllTextAsync(filePath));
 var times = match.Groups["Time"].Captures.Select(e => long.Parse(e.Value)).ToArray();
 var distances = match.Groups["Distance"].Captures.Select(e => long.Parse(e.Value)).ToArray();
 
