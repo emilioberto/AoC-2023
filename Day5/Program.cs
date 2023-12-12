@@ -50,14 +50,6 @@ var almanac = maps.Select((mapCapture, index) =>
         });
     }
 
-    foreach (var rule in map.MapRules)
-    {
-        // for (int i = 0; i < rule.Range; i++)
-        // {
-        //     map.Mapping.Add(new(rule.SourceStart + i, rule.DestinationStart + i));
-        // }
-    }
-
     return map;
 }).ToArray();
 
@@ -84,35 +76,52 @@ var locationResults = seedNumbers.Select(seedNumber =>
 part1Result = locationResults.Min();
 
 Console.WriteLine($"Part 1 result: {part1Result}");
+
 // ------
 // PART 2
 // ------
 
-var seedNumbersRanges = new List<(long, long)>();
+var seedNumbersRanges = new List<(long start, long end)>();
 for (long i = 0; i < seedNumbers.Length - 1; i += 2)
 {
-    seedNumbersRanges.Add((seedNumbers[i], seedNumbers[i + 1]));
+    seedNumbersRanges.Add((seedNumbers[i], seedNumbers[i] + seedNumbers[i + 1] - 1));
 }
 
-var mappings = new List<List<(long, long)>>();
-
-var conversionMap = almanac.Single(e => e.From == "seed");
-foreach (var mapRule in conversionMap.MapRules)
+var found = false;
+part2Result = 0;
+while (!found)
 {
-    var tempMappings = new List<(long, long)>();
+    long result = part2Result;
+    var conversionMap = almanac.Single(e => e.To == "location");
+
     while (conversionMap is not null)
     {
-        var start = conversionMap.SourceStart;
-        var end = conversionMap.SourceStart + mapRule.Range - 1;
-        tempMappings.Add((start, end));
+        foreach (var mapRule in conversionMap.MapRules)
+        {
+            if (mapRule.DestinationStart <= result && result <= mapRule.DestinationStart + mapRule.Range - 1)
+            {
+                result -= (mapRule.DestinationStart - mapRule.SourceStart);
+                break;
+            }
+        }
 
-        conversionMap = almanac.SingleOrDefault(e => e.From == conversionMap.To);
+        conversionMap = almanac.SingleOrDefault(e => e.To == conversionMap.From);
     }
 
-    conversionMap = almanac.Single(e => e.From == "seed");
-    mappings.Add(tempMappings);
-}
+    foreach (var seedNumbersRange in seedNumbersRanges)
+    {
+        if (result >= seedNumbersRange.start && result <= seedNumbersRange.end)
+        {
+            found = true;
+            break;
+        }
+    }
 
+    if (!found)
+    {
+        part2Result++;
+    }
+}
 
 Console.WriteLine($"Part 2 result: {part2Result}");
 
