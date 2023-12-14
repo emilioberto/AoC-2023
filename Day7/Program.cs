@@ -6,21 +6,21 @@ long part1Result = 0;
 long part2Result = 0;
 
 var handsBidsRegex = new Regex(@"(?<Hand>([23456789AKQJT]{5}))\s+(?<Bid>(\d*))", RegexOptions.Multiline);
-var cardsValue = new Dictionary<string, int>
+var cardsValue = new Dictionary<char, char>
 {
-    { "A", 14 },
-    { "K", 13 },
-    { "Q", 12 },
-    { "J", 11 },
-    { "T", 10 },
-    { "9", 9 },
-    { "8", 8 },
-    { "7", 7 },
-    { "6", 6 },
-    { "5", 5 },
-    { "4", 4 },
-    { "3", 3 },
-    { "2", 2 },
+    { 'A', 'A' },
+    { 'K', 'B' },
+    { 'Q', 'C' },
+    { 'J', 'D' },
+    { 'T', 'E' },
+    { '9', 'F' },
+    { '8', 'G' },
+    { '7', 'H' },
+    { '6', 'I' },
+    { '5', 'J' },
+    { '4', 'K' },
+    { '3', 'L' },
+    { '2', 'M' },
 };
 
 var summaryList = new List<HandSummary>();
@@ -66,25 +66,32 @@ await foreach (var line in File.ReadLinesAsync(filePath))
         handValue = HandValue.HighCard;
     }
 
+    var handWithReplacedCards = hand!;
+    foreach (var cardKeyValue in cardsValue)
+    {
+        handWithReplacedCards = handWithReplacedCards.Replace(cardKeyValue.Key, cardKeyValue.Value);
+    }
+
     summaryList.Add(
         new()
         {
             Bid = bid,
-            Hand = hand,
+            Hand = handWithReplacedCards,
             HandValue = handValue
         }
     );
 }
 
-var groupedAndOrderedSummaryList = summaryList
+var orderedSummary = summaryList
+    .OrderBy(e => e.HandValue)
     .GroupBy(e => e.HandValue)
-    .OrderBy(e => e.Key);
+    .Select(e => e.ToArray().OrderByDescending(handSummary => handSummary.Hand))
+    .SelectMany(e => e.ToArray())
+    .ToArray();
 
-foreach (var group in groupedAndOrderedSummaryList)
+for (int i = 1; i <= orderedSummary.Length; i++)
 {
-    if (group.Count() > 1)
-    {
-    }
+    part1Result += (orderedSummary[i - 1].Bid * (i));
 }
 
 
