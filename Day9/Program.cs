@@ -5,10 +5,8 @@ var filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "input.txt");
 var historyRegex = new Regex(@"\-?\d+");
 var part1Result = 0m;
 var part2Result = 0m;
-var row = 0;
 await foreach (var line in File.ReadLinesAsync(filePath))
 {
-    row++;
     var matches = historyRegex.Matches(line);
     var numbers = matches.Select(e => e.Value).Select(long.Parse).ToList();
 
