@@ -57,16 +57,6 @@ while (foundPath.Count <= 3 || foundPath.Last().Part is not StartingPosition)
 PrintMatrixFromPath(matrix, foundPath);
 part1Result = (foundPath.Count - 1) / 2;
 
-
-// var result = FindPath(matrix, startingPosition.y, startingPosition.x, new List<PathNode>()
-// {
-//     new PathNode(startingPosition.y, startingPosition.x, StartingPosition)
-// });
-//
-// PrintMatrixFromPath(matrix, result);
-//
-// part1Result = (result.Count - 1) / 2;
-
 Console.WriteLine($"Part 1 result: {part1Result}");
 
 internal struct PathNode
@@ -93,37 +83,6 @@ internal partial class Program
     public const string Vertical = "|";
     public const string StartingPosition = "S";
     public const string Ground = ".";
-
-    static List<PathNode> FindPath(string[][] matrix, int y, int x, List<PathNode> path)
-    {
-        if (path.Count > 3 && path.First().Part is StartingPosition && path.Last().Part is StartingPosition)
-        {
-            return path;
-        }
-
-        var connectingCells = GetConnectingCells(matrix, y, x)
-            .Where(e => e.Part is StartingPosition && path.Count > 2 || !path.Contains(e)); // Starting position only if closing loop and avoid already used cells.
-
-        var bestPath = new List<PathNode>();
-        List<List<PathNode>> invalidPaths = new();
-        foreach (var cell in connectingCells)
-        {
-            var pathCopy = path.Select(tuple => tuple).Append(cell).ToList();
-            var foundPath = FindPath(matrix, cell.Y, cell.X, pathCopy);
-
-            if (foundPath.Count == path.Count)
-            {
-                invalidPaths.Add(foundPath);
-                Console.WriteLine("Invalid path found!");
-                continue;
-            }
-
-            bestPath = foundPath;
-            break;
-        }
-
-        return bestPath;
-    }
 
     private static void PrintMatrixFromPath(string[][] matrix, List<PathNode> path)
     {
