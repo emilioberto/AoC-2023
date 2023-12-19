@@ -9,23 +9,18 @@ await foreach (var line in File.ReadLinesAsync(filePath))
     matrix = matrix.Append(line.ToCharArray().Select(e => e.ToString()).ToArray()).ToArray();
 }
 
-var resetted = -1;
 (int y, int x) start = (0, 0);
-while (resetted != 0)
+for (var y = 0; y < matrix.Length; y++)
 {
-    resetted = 0;
-    for (var y = 0; y < matrix.Length; y++)
+    var row = matrix[y];
+    for (var x = 0; x < row.Length; x++)
     {
-        var row = matrix[y];
-        for (var x = 0; x < row.Length; x++)
+        if (row[x] is not StartingPosition)
         {
-            if (row[x] is not StartingPosition)
-            {
-                continue;
-            }
-
-            start = (y, x);
+            continue;
         }
+
+        start = (y, x);
     }
 }
 
@@ -59,6 +54,122 @@ part1Result = (foundPath.Count - 1) / 2;
 
 Console.WriteLine($"Part 1 result: {part1Result}");
 
+// Part 2
+
+List<PathNode> nestCoordinates = new();
+for (var y = 0; y < matrix.Length; y++)
+{
+    var row = matrix[y];
+    for (var x = 0; x < row.Length; x++)
+    {
+        if (matrix[y][x] is not Ground)
+        {
+            continue;
+        }
+
+        List<string> leftElements = new();
+        List<string> rightElements = new();
+        for (int i = 0; i < row.Length; i++)
+        {
+            if (i < x && row[i] is not Ground)
+            {
+                leftElements.Add(row[i]);
+            }
+            else if (i < x && row[i] is Ground)
+            {
+                leftElements = new();
+            }
+
+            if (i > x && row[i] is not Ground)
+            {
+                rightElements.Add(row[i]);
+            }
+            else if (i > x && row[i] is Ground)
+            {
+                rightElements = new();
+            }
+        }
+        if (leftElements.Count == 0 || rightElements.Count == 0 || (leftElements.Count + rightElements.Count) % 2 != 0)
+        {
+            continue;
+        }
+
+        List<string> topElements = new();
+        List<string> bottomElements = new();
+        for (int i = 0; i < matrix.Length; i++)
+        {
+            if (i < y && matrix[i][x] is not Ground)
+            {
+                topElements.Add(matrix[i][x]);
+            }
+            else if (i < y && matrix[i][x] is Ground)
+            {
+                topElements = new();
+            }
+
+            if (i > y && matrix[i][x] is not Ground)
+            {
+                bottomElements.Add(matrix[i][x]);
+            }
+            else if (i > y && matrix[i][x] is Ground)
+            {
+                bottomElements = new();
+            }
+        }
+
+        if (topElements.Count == 0 || bottomElements.Count == 0 || (topElements.Count + bottomElements.Count) % 2 != 0)
+        {
+            continue;
+        }
+
+        nestCoordinates.Add(new(y, x, Nest));
+    }
+}
+
+foreach (var coordinate in nestCoordinates)
+{
+    matrix[coordinate.Y][coordinate.X] = coordinate.Part;
+}
+
+var fakeNestsRemoved = -1;
+while (fakeNestsRemoved != 0)
+{
+    fakeNestsRemoved = 0;
+    for (var y = 0; y < matrix.Length; y++)
+    {
+        var row = matrix[y];
+        for (var x = 0; x < row.Length; x++)
+        {
+            if (matrix[y][x] is not Nest)
+            {
+                continue;
+            }
+
+            var topCell = y == 0 ? null : matrix[y - 1][x];
+            var bottomCell = y == matrix.Length - 1 ? null : matrix[y + 1][x];
+            var leftCell = x == 0 ? null : matrix[y][x - 1];
+            var rightCell = x == matrix[y].Length - 1 ? null : matrix[y][x + 1];
+            if (topCell is null or Ground
+                || bottomCell is null or Ground
+                || leftCell is null or Ground
+                || rightCell is null or Ground
+               )
+            {
+                matrix[y][x] = Ground;
+                fakeNestsRemoved++;
+            }
+        }
+    }
+}
+
+foreach (var row in matrix)
+{
+    Console.WriteLine(string.Join("", row));
+}
+
+part2Result = matrix.SelectMany(row => row.Where(e => e is Nest)).Count();
+Console.WriteLine($"Part 2 result: {part2Result}");
+
 internal struct PathNode
 {
     public int Y { get; set; }
@@ -83,6 +194,7 @@ internal partial class Program
     public const string Vertical = "|";
     public const string StartingPosition = "S";
     public const string Ground = ".";
+    public const string Nest = "O";
 
     private static void PrintMatrixFromPath(string[][] matrix, List<PathNode> path)
     {
