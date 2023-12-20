@@ -56,119 +56,158 @@ Console.WriteLine($"Part 1 result: {part1Result}");
 
 // Part 2
 
-List<PathNode> nestCoordinates = new();
-for (var y = 0; y < matrix.Length; y++)
+var topLeftCorner = foundPath
+    .Where(node => node.Part is TopLeftCorner)
+    .OrderBy(e => e.Y)
+    .ThenBy(node => node.X)
+    .First();
+
+var index = foundPath.IndexOf(topLeftCorner);
+var foundPathStartingFromTopLeftCorner = foundPath.GetRange(index, foundPath.Count - index);
+foundPathStartingFromTopLeftCorner.AddRange(foundPath.GetRange(0, index));
+
+// Check if we are going to the right side or to bottom and set initial offsets
+var yOffset = foundPathStartingFromTopLeftCorner[1].Part is Vertical ? 0 : -1;
+var xOffset = foundPathStartingFromTopLeftCorner[1].Part is Vertical ? -1 : 0;
+for (var i = 0; i < foundPathStartingFromTopLeftCorner.Count; i++)
 {
-    var row = matrix[y];
-    for (var x = 0; x < row.Length; x++)
+    PathNode? previousNode = (i - 1 >= 0) ? foundPathStartingFromTopLeftCorner[i - 1] : null;
+    var pathNode = foundPathStartingFromTopLeftCorner[i];
+    var nextNode = i + 1 < foundPathStartingFromTopLeftCorner.Count
+        ? foundPathStartingFromTopLeftCorner[i + 1]
+        : foundPathStartingFromTopLeftCorner[0];
+
+    var xCellToFix = pathNode.X;
+    if (xOffset < 0)
     {
-        if (matrix[y][x] is not Ground)
-        {
-            continue;
-        }
-
-        List<string> leftElements = new();
-        List<string> rightElements = new();
-        for (int i = 0; i < row.Length; i++)
-        {
-            if (i < x && row[i] is not Ground)
-            {
-                leftElements.Add(row[i]);
-            }
-            else if (i < x && row[i] is Ground)
-            {
-                leftElements = new();
-            }
-
-            if (i > x && row[i] is not Ground)
-            {
-                rightElements.Add(row[i]);
-            }
-            else if (i > x && row[i] is Ground)
-            {
-                rightElements = new();
-            }
-        }
-        if (leftElements.Count == 0 || rightElements.Count == 0 || (leftElements.Count + rightElements.Count) % 2 != 0)
-        {
-            continue;
-        }
-
-        List<string> topElements = new();
-        List<string> bottomElements = new();
-        for (int i = 0; i < matrix.Length; i++)
-        {
-            if (i < y && matrix[i][x] is not Ground)
-            {
-                topElements.Add(matrix[i][x]);
-            }
-            else if (i < y && matrix[i][x] is Ground)
-            {
-                topElements = new();
-            }
-
-            if (i > y && matrix[i][x] is not Ground)
-            {
-                bottomElements.Add(matrix[i][x]);
-            }
-            else if (i > y && matrix[i][x] is Ground)
-            {
-                bottomElements = new();
-            }
-        }
-
-        if (topElements.Count == 0 || bottomElements.Count == 0 || (topElements.Count + bottomElements.Count) % 2 != 0)
-        {
-            continue;
-        }
-
-        nestCoordinates.Add(new(y, x, Nest));
+        xCellToFix = Math.Max(pathNode.X + xOffset, 0);
     }
-}
+    else if (xOffset > 0)
+    {
+        xCellToFix = Math.Min(pathNode.X + xOffset, matrix[0].Length - 1);
+    }
 
-foreach (var coordinate in nestCoordinates)
-{
-    matrix[coordinate.Y][coordinate.X] = coordinate.Part;
-}
+    var yCellToFix = pathNode.Y;
+    if (yOffset < 0)
+    {
+        yCellToFix = Math.Max(pathNode.Y + yOffset, 0);
+    }
+    else if (yOffset > 0)
+    {
+        yCellToFix = Math.Min(pathNode.Y + yOffset, matrix.Length - 1);
+    }
 
-var fakeNestsRemoved = -1;
-while (fakeNestsRemoved != 0)
-{
-    fakeNestsRemoved = 0;
+    if (!foundPath.Any(node => node.Y == yCellToFix && node.X == xCellToFix))
+    {
+        matrix[yCellToFix][xCellToFix] = OutOfTheLoop;
+    }
+
+    if (pathNode.Y != nextNode.Y) // We are going left or right
+    {
+        var wasLastStepToRight = (previousNode.HasValue && previousNode.Value.X < pathNode.X);
+        xOffset = wasLastStepToRight ? +1 : -1;
+        yOffset = 0;
+    }
+
+    if (pathNode.X != nextNode.X) // We are going up or down
+    {
+        var wasLastStepToDown = (previousNode.HasValue && previousNode.Value.Y < pathNode.Y);
+        yOffset = wasLastStepToDown ? +1 : -1;
+        xOffset = 0;
+    }
+
+    Console.Clear();
     for (var y = 0; y < matrix.Length; y++)
     {
         var row = matrix[y];
-        for (var x = 0; x < row.Length; x++)
+        if (y == pathNode.Y)
         {
-            if (matrix[y][x] is not Nest)
+            row[pathNode.X] = "#";
+        }
+
+        Console.WriteLine(string.Join("", row.Select(s => s)));
+    }
+}
+
+var hadChanges = true;
+while (hadChanges)
+{
+    hadChanges = false;
+    for (var y = 0; y < matrix.Length; y++)
+    {
+        for (int x = 0; x < matrix[y].Length; x++)
+        {
+            if (matrix[y][x] is not Ground)
             {
                 continue;
             }
 
-            var topCell = y == 0 ? null : matrix[y - 1][x];
-            var bottomCell = y == matrix.Length - 1 ? null : matrix[y + 1][x];
-            var leftCell = x == 0 ? null : matrix[y][x - 1];
-            var rightCell = x == matrix[y].Length - 1 ? null : matrix[y][x + 1];
-            if (topCell is null or Ground
-                || bottomCell is null or Ground
-                || leftCell is null or Ground
-                || rightCell is null or Ground
-               )
+            var currentCell = matrix[y][x];
+            var topCell = y == 0 ? Ground : matrix[y - 1][x];
+            var bottomCell = y == matrix.Length - 1 ? Ground : matrix[y + 1][x];
+            var leftCell = x == 0 ? Ground : matrix[y][x - 1];
+            var rightCell = x == matrix[y].Length - 1 ? Ground : matrix[y][x + 1];
+
+            if (
+                topCell is OutOfTheLoop
+                || bottomCell is OutOfTheLoop
+                || leftCell is OutOfTheLoop
+                || rightCell is OutOfTheLoop
+            )
             {
-                matrix[y][x] = Ground;
-                fakeNestsRemoved++;
+                hadChanges = true;
+                matrix[y][x] = OutOfTheLoop;
             }
         }
     }
 }
 
+Console.WriteLine("\n\n");
+
 foreach (var row in matrix)
 {
-    Console.WriteLine(string.Join("", row));
+    Console.WriteLine(string.Join("", row.Select(s => s is Ground or OutOfTheLoop ? s : "=")));
 }
 
 part2Result = matrix.SelectMany(row => row.Where(e => e is Nest)).Count();
 Console.WriteLine($"Part 2 result: {part2Result}");
+
+bool IsInRowPair((PathNode? p1, PathNode? p2) pair, int x)
+{
+    if (pair.p1.HasValue && pair.p2.HasValue)
+    {
+        var isInPair = pair.p1!.Value.X < x && pair.p2!.Value.X > x;
+        return isInPair;
+    }
+
+    if (pair.p1.HasValue && !pair.p2.HasValue)
+    {
+        return x < pair.p1.Value.X;
+    }
+
+    return false;
+}
+
+;
+
+bool IsInColPair((PathNode? p1, PathNode? p2) pair, int y)
+{
+    if (pair.p1.HasValue && pair.p2.HasValue)
+    {
+        var isInPair = pair.p1.Value.Y < y && pair.p2.Value.Y > y;
+        return isInPair;
+    }
+
+    if (pair.p1.HasValue && !pair.p2.HasValue)
+    {
+        return y < pair.p1.Value.Y;
+    }
+
+    return false;
+}
+
+;
+
 
 internal struct PathNode
 {
@@ -194,7 +233,8 @@ internal partial class Program
     public const string Vertical = "|";
     public const string StartingPosition = "S";
     public const string Ground = ".";
-    public const string Nest = "O";
+    public const string OutOfTheLoop = "O";
+    public const string Nest = "I";
 
     private static void PrintMatrixFromPath(string[][] matrix, List<PathNode> path)
     {

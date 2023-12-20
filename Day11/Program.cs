@@ -47,7 +47,7 @@ distances = CaculateDistances(stars, matrix, invertedMatrix, cosmicExpansionMult
 part2Result = distances.Sum(e => e.distance);
 Console.WriteLine($"Part 1 result: {part2Result}");
 
-List<(long starA, long starB, long distance)> CaculateDistances(List<(long y, long x, long number)> valueTuples, List<List<string>> list, List<List<string>> invertedMatrix1, long i)
+List<(long starA, long starB, long distance)> CaculateDistances(List<(long y, long x, long number)> valueTuples, List<List<string>> list, List<List<string>> invertedMatrix1, long multiplier)
 {
     var distances1 = new List<(long starA, long starB, long distance)>();
     for (var current = 0; current < valueTuples.Count; current++)
@@ -65,7 +65,7 @@ List<(long starA, long starB, long distance)> CaculateDistances(List<(long y, lo
             var expandedColumns = invertedMatrix1.Where((column, x) => x > x2 && x < x1 && column.All(e => e is ".")).Count();
             var xDistance = (x1 == x2 ? 0 : x1 - x2);
             var yDistance = (y1 == y2 ? 0 : y1 - y2);
-            var distance = xDistance + yDistance  + (expandedColumns * i - expandedColumns) + (expandedRows * i - expandedRows);
+            var distance = xDistance + yDistance  + (expandedColumns * multiplier - expandedColumns) + (expandedRows * multiplier - expandedRows);
 
             distances1.Add((currentStar.number, nextStar.number, distance));
         }
