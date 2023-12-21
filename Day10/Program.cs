@@ -62,104 +62,55 @@ var topLeftCorner = foundPath
     .ThenBy(node => node.X)
     .First();
 
+if (start.y <= topLeftCorner.Y && start.x <= topLeftCorner.X)
+{
+    topLeftCorner = foundPath.First(node => node.Part is StartingPosition);
+}
+
 var index = foundPath.IndexOf(topLeftCorner);
 var foundPathStartingFromTopLeftCorner = foundPath.GetRange(index, foundPath.Count - index);
 foundPathStartingFromTopLeftCorner.AddRange(foundPath.GetRange(0, index));
 
-// Check if we are going to the right side or to bottom and set initial offsets
-var yOffset = foundPathStartingFromTopLeftCorner[1].Part is Vertical ? 0 : -1;
-var xOffset = foundPathStartingFromTopLeftCorner[1].Part is Vertical ? -1 : 0;
-for (var i = 0; i < foundPathStartingFromTopLeftCorner.Count; i++)
+// Check if we are going to the right side or to bottom and set initial offset
+(int y, int x) offset = foundPathStartingFromTopLeftCorner[1].Part is Vertical ? (0, -1) : (-1, 0);
+var currentNode = foundPathStartingFromTopLeftCorner[0];
+(int y, int x) nodeToChange = (currentNode.Y + offset.y, currentNode.X + offset.x);
+(int y, int x) difference = (
+    foundPathStartingFromTopLeftCorner[1].Y - foundPathStartingFromTopLeftCorner[0].Y,
+    foundPathStartingFromTopLeftCorner[1].X - foundPathStartingFromTopLeftCorner[0].X
+);
+
+for (var i = 0; i < foundPathStartingFromTopLeftCorner.Count - 1; i++)
 {
-    PathNode? previousNode = (i - 1 >= 0) ? foundPathStartingFromTopLeftCorner[i - 1] : null;
-    var pathNode = foundPathStartingFromTopLeftCorner[i];
-    var nextNode = i + 1 < foundPathStartingFromTopLeftCorner.Count
-        ? foundPathStartingFromTopLeftCorner[i + 1]
-        : foundPathStartingFromTopLeftCorner[0];
-
-    var xCellToFix = pathNode.X;
-    if (xOffset < 0)
+    if (!foundPath.Any(node => node.Y == nodeToChange.y && node.X == nodeToChange.x))
     {
-        xCellToFix = Math.Max(pathNode.X + xOffset, 0);
+        matrix[nodeToChange.y][nodeToChange.x] = OutOfTheLoop;
     }
-    else if (xOffset > 0)
-    {
-        xCellToFix = Math.Min(pathNode.X + xOffset, matrix[0].Length - 1);
-    }
-
-    var yCellToFix = pathNode.Y;
-    if (yOffset < 0)
-    {
-        yCellToFix = Math.Max(pathNode.Y + yOffset, 0);
-    }
-    else if (yOffset > 0)
-    {
-        yCellToFix = Math.Min(pathNode.Y + yOffset, matrix.Length - 1);
-    }
-
-    if (!foundPath.Any(node => node.Y == yCellToFix && node.X == xCellToFix))
-    {
-        matrix[yCellToFix][xCellToFix] = OutOfTheLoop;
-    }
-
-    if (pathNode.Y != nextNode.Y) // We are going left or right
-    {
-        var wasLastStepToRight = (previousNode.HasValue && previousNode.Value.X < pathNode.X);
-        xOffset = wasLastStepToRight ? +1 : -1;
-        yOffset = 0;
-    }
-
-    if (pathNode.X != nextNode.X) // We are going up or down
-    {
-        var wasLastStepToDown = (previousNode.HasValue && previousNode.Value.Y < pathNode.Y);
-        yOffset = wasLastStepToDown ? +1 : -1;
-        xOffset = 0;
-    }
-
     Console.Clear();
-    for (var y = 0; y < matrix.Length; y++)
+    PrintMatrix(matrix);
+
+    if (currentNode.Part is TopLeftCorner or TopRightCorner or BottomLeftCorner or BottomRightCorner or StartingPosition)
     {
-        var row = matrix[y];
-        if (y == pathNode.Y)
+        (int y, int x) nextNodeToChange = (currentNode.Y + offset.y + difference.y, currentNode.X + offset.x + difference.x);
+        if (!foundPath.Any(node => node.Y == nextNodeToChange.y && node.X == nextNodeToChange.x))
         {
-            row[pathNode.X] = "#";
+            matrix[nextNodeToChange.y][nextNodeToChange.x] = OutOfTheLoop;
         }
 
-        Console.WriteLine(string.Join("", row.Select(s => s)));
-    }
-}
+        Console.Clear();
+        PrintMatrix(matrix);
 
-var hadChanges = true;
-while (hadChanges)
-{
-    hadChanges = false;
-    for (var y = 0; y < matrix.Length; y++)
-    {
-        for (int x = 0; x < matrix[y].Length; x++)
+        if (currentNode.Part is not StartingPosition)
         {
-            if (matrix[y][x] is not Ground)
-            {
-                continue;
-            }
-
-            var currentCell = matrix[y][x];
-            var topCell = y == 0 ? Ground : matrix[y - 1][x];
-            var bottomCell = y == matrix.Length - 1 ? Ground : matrix[y + 1][x];
-            var leftCell = x == 0 ? Ground : matrix[y][x - 1];
-            var rightCell = x == matrix[y].Length - 1 ? Ground : matrix[y][x + 1];
-
-            if (
-                topCell is OutOfTheLoop
-                || bottomCell is OutOfTheLoop
-                || leftCell is OutOfTheLoop
-                || rightCell is OutOfTheLoop
-            )
-            {
-                hadChanges = true;
-                matrix[y][x] = OutOfTheLoop;
-            }
+            offset = (
+                foundPathStartingFromTopLeftCorner[i + 1].Y - foundPathStartingFromTopLeftCorner[i].Y,
+                foundPathStartingFromTopLeftCorner[i + 1].X - foundPathStartingFromTopLeftCorner[i].X
+            );
         }
     }
+    currentNode = foundPathStartingFromTopLeftCorner[i + 1];
+    nodeToChange.y = currentNode.Y + offset.y;
+    nodeToChange.x = currentNode.X + offset.x;
 }
 
 Console.WriteLine("\n\n");
@@ -207,6 +158,15 @@ bool IsInColPair((PathNode? p1, PathNode? p2) pair, int y)
 }
 
 ;
+
+void PrintMatrix(string[][] strings)
+{
+    for (var y = 0; y < strings.Length; y++)
+    {
+        var row = strings[y];
+        Console.WriteLine(string.Join("", row.Select(s => s)));
+    }
+}
 
 
 internal struct PathNode
