@@ -79,6 +79,7 @@ var direction = foundPathStartingFromTopLeftCorner[1].Part is Vertical ? Vertica
 
 for (var i = 0; i < foundPathStartingFromTopLeftCorner.Count; i++)
 {
+    var currentNode = foundPathStartingFromTopLeftCorner[i];
     switch (lastCorner)
     {
         case TopLeftCorner:
@@ -99,12 +100,11 @@ for (var i = 0; i < foundPathStartingFromTopLeftCorner.Count; i++)
     nodeToCheck.Y += offset.y;
     nodeToCheck.X += offset.x;
 
-    if (!foundPath.Any(node => node.Y == nodeToCheck.Y + offset.y && node.X == nodeToCheck.X))
-    {
-        matrix[nodeToCheck.Y + offset.y][nodeToCheck.X + offset.x] = OutOfTheLoop;
-    }
+    if (!foundPath.Any(node => node.Y == nodeToCheck.Y + offset.y && node.X == nodeToCheck.X)) { }
 
-    if (nodeToCheck.Part is TopLeftCorner or TopRightCorner or BottomLeftCorner or BottomRightCorner or StartingPosition)
+    matrix[nodeToCheck.Y + offset.y][nodeToCheck.X + offset.x] = OutOfTheLoop;
+
+    if (currentNode.Part is TopLeftCorner or TopRightCorner or BottomLeftCorner or BottomRightCorner or StartingPosition)
     {
         switch (lastCorner)
         {
@@ -127,8 +127,6 @@ for (var i = 0; i < foundPathStartingFromTopLeftCorner.Count; i++)
     Console.Clear();
     PrintMatrix(matrix);
 }
-
-
 
 
 //
