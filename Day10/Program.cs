@@ -94,7 +94,7 @@ for (var i = 0; i < foundPathStartingFromTopLeftCorner.Count; i++)
         {
             if (!foundPath.Any(node => node.Y == nodeToCheck.Y + offset.y && node.X == nodeToCheck.X + offset.x))
             {
-                matrix[nodeToCheck.Y + offset.y][nodeToCheck.X + offset.x] = "$";
+                matrix[nodeToCheck.Y + offset.y][nodeToCheck.X + offset.x] = Nest;
             }
         }
 
@@ -152,7 +152,6 @@ for (var i = 0; i < foundPathStartingFromTopLeftCorner.Count; i++)
         continue;
     }
 
-    matrix[nodeToCheck.Y][nodeToCheck.X] = "$";
     if (!foundPath.Any(node => node.Y == nodeToCheck.Y && node.X == nodeToCheck.X))
     {
         matrix[nodeToCheck.Y][nodeToCheck.X] = Nest;
