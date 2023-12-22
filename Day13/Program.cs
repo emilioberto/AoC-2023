@@ -8,10 +8,13 @@ await foreach (var line in File.ReadLinesAsync(filePath))
 {
     if (string.IsNullOrEmpty(line))
     {
-        var colReflection = CheckColsReflection(matrix);
-        var rowReflection = CheckRowsReflection(matrix);
+        var rows = CheckResult(matrix);
+        var columns = CheckResult(GetInvertedMatrix(matrix));
+        part1Result += (columns ?? 0) + (100 * (rows ?? 0));
 
-        part1Result += (colReflection ?? 0) + (100 * (rowReflection ?? 0));
+        // var colReflection = CheckRowsReflection(matrix);
+        // var rowReflection = CheckRowsReflection(GetInvertedMatrix(matrix));
+        // part1Result += (rowReflection ?? 0) + (100 * (colReflection ?? 0));
 
         matrix = Array.Empty<string[]>();
         continue;
@@ -20,101 +23,77 @@ await foreach (var line in File.ReadLinesAsync(filePath))
     matrix = matrix.Append(line.ToCharArray().Select(e => e.ToString()).ToArray()).ToArray();
 }
 
-var colReflection1 = CheckColsReflection(matrix);
-var rowReflection1 = CheckRowsReflection(matrix);
-part1Result += (colReflection1 ?? 0) + (100 * (rowReflection1 ?? 0));
+var rows2 = CheckResult(matrix);
+var columns2 = CheckResult(GetInvertedMatrix(matrix));
+part1Result += (columns2 ?? 0) + (100 * (rows2 ?? 0));
 
 Console.WriteLine($"Part 1 result: {part1Result}");
 
-
-int? CheckRowsReflection(string[][] matrix)
+string[][] GetInvertedMatrix(string[][] matrix)
 {
-    var rows = matrix.Select((row, index) => (string.Join("", row), index)).ToArray();
-    var groupedRows = rows.GroupBy(e => e.Item1);
+    var invertedMatrix = new List<List<string>>();
 
-    var reflection = groupedRows.Where(e => e.Count() == 2 && Math.Abs(e.First().index - e.Last().index) == 1).ToArray().SingleOrDefault();
-
-    if (reflection is null)
+    for (int y = 0; y < matrix.Length; y++)
     {
-        return null;
-    }
+        for (int x = 0; x < matrix[0].Length; x++)
+        {
+            if (y == 0)
+            {
+                invertedMatrix.Add(new List<string>());
+            }
 
-    var matches = true;
-    var left = reflection.First().index;
-    var right = reflection.Last().index;
-    while (matches)
-    {
-        if (left < 1 || right > rows.Length - 2)
-        {
-            matches = false;
-            continue;
-        }
-
-        if (rows[left - 1].Item1 == rows[right + 1].Item1)
-        {
-            left--;
-            right++;
-        }
-        else
-        {
-            left++;
-            right--;
-            matches = false;
+            invertedMatrix[x].Add(matrix[y][x]);
         }
     }
 
-    if (left > 1 || right < rows.Length - 2)
-    {
-        return null;
-    }
-
-    return reflection.First().index + 1;
+    return invertedMatrix.Select(row => row.ToArray()).ToArray();
 }
 
-int? CheckColsReflection(string[][] matrix)
+
+int? CheckResult(string[][] matrix)
 {
-    var rows = matrix[0].Select((_, index) =>
+    var hashmap = new List<long>();
+    foreach (var row in matrix)
     {
-        var column = "";
-        for (int i = 0; i < matrix.Length - 1; i++)
+        var result = 0L;
+        for (long i = 0; i < row.Length; i++)
         {
-            column += matrix[i][index];
+            result += row[i] is "." ? (long)(Math.Pow(2, i)) : 0L;
         }
-        return (column, index);
-    }).ToArray();
 
-    var groupedRows = rows.GroupBy(e => e.Item1);
-
-    var reflection = groupedRows.Where(e => e.Count() == 2 && Math.Abs(e.First().index - e.Last().index) == 1).ToArray().SingleOrDefault();
-
-    if (reflection is null)
-    {
-        return null;
+        hashmap.Add(result);
     }
 
-    var matches = true;
-    var left = reflection.First().index;
-    var right = reflection.Last().index;
-    while (matches)
-    {
-        if (left < 1 || right > rows.Length - 2)
-        {
-            matches = false;
-            continue;
-        }
+    // EG: 306 331 252 252 331 307 330
+    Console.WriteLine(string.Join(" ", hashmap));
 
-        if (rows[left - 1].Item1 == rows[right + 1].Item1)
+    for (var i = 0; i < hashmap.Count - 1; i++)
+    {
+        if (hashmap[i] == hashmap[i + 1] && CheckNeighbors(hashmap, i))
         {
-            left--;
-            right++;
+            return i + 1;
+        }
+    }
+
+    return null;
+}
+
+bool CheckNeighbors(List<long> hashMap, int index)
+{
+    var leftOffset = index;
+    var rightOffset = index + 1;
+    while (leftOffset >= 0 && rightOffset <= hashMap.Count - 1)
+    {
+        if (hashMap[leftOffset] == hashMap[rightOffset])
+        {
+            leftOffset--;
+            rightOffset++;
         }
         else
         {
-            left++;
-            right--;
-            matches = false;
+            return false;
         }
     }
 
-    return reflection.First().index + 1;
+    return true;
 }
