@@ -157,8 +157,8 @@ for (var i = 0; i < foundPathStartingFromTopLeftCorner.Count; i++)
         matrix[nodeToCheck.Y][nodeToCheck.X] = Nest;
     }
 
-    Console.Clear();
-    PrintMatrix(matrix);
+    // Console.Clear();
+    // PrintMatrix(matrix);
 }
 
 var hadChanges = true;
