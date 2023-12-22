@@ -12,10 +12,6 @@ await foreach (var line in File.ReadLinesAsync(filePath))
         var columns = CheckResult(GetInvertedMatrix(matrix));
         part1Result += (columns ?? 0) + (100 * (rows ?? 0));
 
-        // var colReflection = CheckRowsReflection(matrix);
-        // var rowReflection = CheckRowsReflection(GetInvertedMatrix(matrix));
-        // part1Result += (rowReflection ?? 0) + (100 * (colReflection ?? 0));
-
         matrix = Array.Empty<string[]>();
         continue;
     }
@@ -65,11 +61,11 @@ int? CheckResult(string[][] matrix)
     }
 
     // EG: 306 331 252 252 331 307 330
-    Console.WriteLine(string.Join(" ", hashmap));
+    // Console.WriteLine(string.Join(" ", hashmap));
 
     for (var i = 0; i < hashmap.Count - 1; i++)
     {
-        if (hashmap[i] == hashmap[i + 1] && CheckNeighbors(hashmap, i))
+        if (hashmap[i] == hashmap[i + 1] && CheckNeighbors(hashmap, i) is not null)
         {
             return i + 1;
         }
@@ -78,7 +74,7 @@ int? CheckResult(string[][] matrix)
     return null;
 }
 
-bool CheckNeighbors(List<long> hashMap, int index)
+int? CheckNeighbors(List<long> hashMap, int index)
 {
     var leftOffset = index;
     var rightOffset = index + 1;
@@ -91,9 +87,9 @@ bool CheckNeighbors(List<long> hashMap, int index)
         }
         else
         {
-            return false;
+            return null;
         }
     }
 
-    return true;
+    return index;
 }
