@@ -28,11 +28,11 @@ var currentPosition = start;
 List<PathNode> foundPath = new() { new PathNode(start.y, start.x, matrix[start.y][start.x]) };
 while (foundPath.Count <= 3 || foundPath.Last().Part is not StartingPosition)
 {
-    var connectingCells = GetConnectingCells(matrix, currentPosition.y, currentPosition.x)
+    var connectingNodes = GetConnectingNodes(matrix, currentPosition.y, currentPosition.x)
         .Where(node => !foundPath.Contains(node) || node.Part is StartingPosition && foundPath.Count > 3)
         .ToList();
 
-    if (connectingCells.Count is 0)
+    if (connectingNodes.Count is 0)
     {
         foreach (var path in foundPath.Where((node, index) => index > 0))
         {
@@ -44,9 +44,9 @@ while (foundPath.Count <= 3 || foundPath.Last().Part is not StartingPosition)
         continue;
     }
 
-    var nextCell = connectingCells.First();
-    foundPath.Add(nextCell);
-    currentPosition = new(nextCell.Y, nextCell.X);
+    var nextNode = connectingNodes.First();
+    foundPath.Add(nextNode);
+    currentPosition = new(nextNode.Y, nextNode.X);
 }
 
 PrintMatrixFromPath(matrix, foundPath);
@@ -74,126 +74,127 @@ foundPathStartingFromTopLeftCorner.AddRange(foundPath.GetRange(0, index));
 // Check if we are going to the right side or to bottom and set initial offset
 (int y, int x) offset = foundPathStartingFromTopLeftCorner[1].Part is Vertical ? (0, 1) : (1, 0);
 
-var lastCorner = TopLeftCorner;
 var direction = foundPathStartingFromTopLeftCorner[1].Part is Vertical ? Vertical : Horizontal;
 
 for (var i = 0; i < foundPathStartingFromTopLeftCorner.Count; i++)
 {
     var currentNode = foundPathStartingFromTopLeftCorner[i];
-    switch (lastCorner)
-    {
-        case TopLeftCorner:
-            offset = direction is Vertical ? (0, 1) : (1, 0);
-            break;
-        case TopRightCorner:
-            offset = direction is Vertical ? (0, -1) : (1, 0);
-            break;
-        case BottomLeftCorner:
-            offset = direction is Vertical ? (0, 1) : (-1, 0);
-            break;
-        case BottomRightCorner:
-            offset = direction is Vertical ? (0, -1) : (-1, 0);
-            break;
-    }
 
     var nodeToCheck = foundPathStartingFromTopLeftCorner[i];
-    nodeToCheck.Y += offset.y;
-    nodeToCheck.X += offset.x;
 
-    if (!foundPath.Any(node => node.Y == nodeToCheck.Y + offset.y && node.X == nodeToCheck.X)) { }
-
-    matrix[nodeToCheck.Y + offset.y][nodeToCheck.X + offset.x] = OutOfTheLoop;
-
-    if (currentNode.Part is TopLeftCorner or TopRightCorner or BottomLeftCorner or BottomRightCorner or StartingPosition)
+    if (i is not 0 && currentNode.Part is TopLeftCorner or TopRightCorner or BottomLeftCorner or BottomRightCorner)
     {
-        switch (lastCorner)
+
+        if (
+            nodeToCheck.X + offset.x < matrix[0].Length
+            && nodeToCheck.X + offset.x >= 0
+            && nodeToCheck.Y + offset.y < matrix.Length
+            && nodeToCheck.Y + offset.y >= 0
+        )
         {
-            case TopLeftCorner:
-                direction = direction is Vertical ? Horizontal : Vertical;
-                break;
-            case TopRightCorner:
-                direction = direction is Vertical ? Horizontal : Vertical;
-                break;
-            case BottomLeftCorner:
-                direction = direction is Vertical ? Horizontal : Vertical;
-                break;
-            case BottomRightCorner:
-                direction = direction is Vertical ? Horizontal : Vertical;
-                break;
+            if (!foundPath.Any(node => node.Y == nodeToCheck.Y + offset.y && node.X == nodeToCheck.X + offset.x))
+            {
+                matrix[nodeToCheck.Y + offset.y][nodeToCheck.X + offset.x] = "$";
+            }
+        }
+
+
+        if (direction is Vertical)
+        {
+            direction = Horizontal;
+            switch (currentNode.Part)
+            {
+                case TopLeftCorner:
+                    offset = offset.x is -1 ? (-1, 0) : (1, 0);
+                    break;
+                case TopRightCorner:
+                    offset = offset.x is -1 ? (1, 0) : (-1, 0);
+                    break;
+                case BottomLeftCorner:
+                    offset = offset.x is -1 ? (1, 0) : (-1, 0);
+                    break;
+                case BottomRightCorner:
+                    offset = offset.x is -1 ? (-1, 0) : (1, 0);
+                    break;
+            }
+        }
+        else
+        {
+            direction = Vertical;
+            switch (currentNode.Part)
+            {
+                case TopLeftCorner:
+                    offset = offset.y is -1 ? (0, -1) : (0, 1);
+                    break;
+                case TopRightCorner:
+                    offset = offset.y is -1 ? (0, 1) : (0, -1);
+                    break;
+                case BottomLeftCorner:
+                    offset = offset.y is -1 ? (0, 1) : (0, -1);
+                    break;
+                case BottomRightCorner:
+                    offset = offset.y is -1 ? (0, -1) : (0, 1);
+                    break;
+            }
         }
     }
 
+    nodeToCheck.Y += offset.y;
+    nodeToCheck.X += offset.x;
+
+    if (
+        nodeToCheck.X >= matrix[0].Length
+        || nodeToCheck.X < 0
+        || nodeToCheck.Y >= matrix.Length
+        || nodeToCheck.Y < 0
+    )
+    {
+        continue;
+    }
+
+    matrix[nodeToCheck.Y][nodeToCheck.X] = "$";
+    if (!foundPath.Any(node => node.Y == nodeToCheck.Y && node.X == nodeToCheck.X))
+    {
+        matrix[nodeToCheck.Y][nodeToCheck.X] = Nest;
+    }
 
     Console.Clear();
     PrintMatrix(matrix);
 }
 
-
-//
-//
-// var corners = foundPathStartingFromTopLeftCorner.Where(node => node.Part is TopLeftCorner or TopRightCorner or BottomLeftCorner or BottomRightCorner or StartingPosition).ToList();
-// (int y, int x) nodeToChange = (foundPathStartingFromTopLeftCorner[0].Y + offset.y, foundPathStartingFromTopLeftCorner[0].X + offset.x);
-// for (var i = 0; i < foundPathStartingFromTopLeftCorner.Count - 1; i++)
-// {
-//     if (foundPathStartingFromTopLeftCorner[i].Part is not (TopLeftCorner or TopRightCorner or BottomLeftCorner or BottomRightCorner or StartingPosition))
-//     {
-//         continue;
-//     }
-//
-//     (int y, int x) difference = (
-//         foundPathStartingFromTopLeftCorner[i+1].Y - foundPathStartingFromTopLeftCorner[i].Y,
-//         foundPathStartingFromTopLeftCorner[i+1].X - foundPathStartingFromTopLeftCorner[i].X
-//     );
-//
-//     var j = i;
-//     var requiredSteps = 2;
-//     while (foundPathStartingFromTopLeftCorner[j].Part is not (TopLeftCorner or TopRightCorner or BottomLeftCorner or BottomRightCorner))
-//     {
-//         j++;
-//         requiredSteps++;
-//     }
-//
-//     var currentNode = foundPathStartingFromTopLeftCorner[i];
-//     for (int step = 0; step < requiredSteps; step++)
-//     {
-//         if (step > 0)
-//         {
-//             nodeToChange.y += difference.y;
-//             nodeToChange.x += difference.x;
-//         }
-//         if (!foundPath.Any(node => node.Y == nodeToChange.y && node.X == nodeToChange.x))
-//         {
-//             matrix[nodeToChange.y][nodeToChange.x] = OutOfTheLoop;
-//         }
-//
-//         Console.Clear();
-//         PrintMatrix(matrix);
-//     }
-//
-//
-//     //
-//     // if (!foundPath.Any(node => node.Y == nodeToChange.y && node.X == nodeToChange.x))
-//     // {
-//     //     matrix[nodeToChange.y][nodeToChange.x] = OutOfTheLoop;
-//     // }
-//     // Console.Clear();
-//     // PrintMatrix(matrix);
-//     //
-//     // currentNode = foundPathStartingFromTopLeftCorner[i + 1];
-//     // nodeToChange.y = currentNode.Y + offset.y;
-//     // nodeToChange.x = currentNode.X + offset.x;
-// }
-
-Console.WriteLine("\n\n");
-
-foreach (var row in matrix)
+var hadChanges = true;
+while (hadChanges)
 {
-    Console.WriteLine(string.Join("", row));
+    hadChanges = false;
+
+    for (int y = 0; y < matrix.Length; y++)
+    {
+        for (int x = 0; x < matrix[y].Length; x++)
+        {
+            var currentNode = matrix[y][x];
+            var topNode = y == 0 ? Ground : matrix[y - 1][x];
+            var bottomNode = y == matrix.Length - 1 ? Ground : matrix[y + 1][x];
+            var leftNode = x == 0 ? Ground : matrix[y][x - 1];
+            var rightNode = x == matrix[y].Length - 1 ? Ground : matrix[y][x + 1];
+
+            if (
+                !foundPath.Any(node => node.Y == y && node.X == x) &&
+                (topNode is Nest || bottomNode is Nest || leftNode is Nest || rightNode is Nest)
+                && matrix[y][x] != Nest
+            )
+            {
+                matrix[y][x] = Nest;
+                hadChanges = true;
+            }
+        }
+    }
 }
+
+Console.Clear();
+PrintMatrix(matrix);
 
 part2Result = matrix.SelectMany(row => row.Where(e => e is Nest)).Count();
 Console.WriteLine($"Part 2 result: {part2Result}");
-;
 
 void PrintMatrix(string[][] strings)
 {
@@ -253,34 +254,34 @@ internal partial class Program
         }
     }
 
-    private static List<PathNode> GetConnectingCells(string[][] matrix, int y, int x)
+    private static List<PathNode> GetConnectingNodes(string[][] matrix, int y, int x)
     {
-        var currentCell = matrix[y][x];
-        var topCell = y == 0 ? Ground : matrix[y - 1][x];
-        var bottomCell = y == matrix.Length - 1 ? Ground : matrix[y + 1][x];
-        var leftCell = x == 0 ? Ground : matrix[y][x - 1];
-        var rightCell = x == matrix[y].Length - 1 ? Ground : matrix[y][x + 1];
+        var currentNode = matrix[y][x];
+        var topNode = y == 0 ? Ground : matrix[y - 1][x];
+        var bottomNode = y == matrix.Length - 1 ? Ground : matrix[y + 1][x];
+        var leftNode = x == 0 ? Ground : matrix[y][x - 1];
+        var rightNode = x == matrix[y].Length - 1 ? Ground : matrix[y][x + 1];
 
         var connectingPieces = new List<PathNode>();
 
-        if (topCell is not Ground && AreCellsConnected(currentCell, topCell, Direction.South) && AreCellsConnected(topCell, currentCell, Direction.North))
+        if (topNode is not Ground && AreNodesConnected(currentNode, topNode, Direction.South) && AreNodesConnected(topNode, currentNode, Direction.North))
         {
-            connectingPieces.Add(new(y - 1, x, topCell));
+            connectingPieces.Add(new(y - 1, x, topNode));
         }
 
-        if (bottomCell is not Ground && AreCellsConnected(currentCell, bottomCell, Direction.North) && AreCellsConnected(bottomCell, currentCell, Direction.South))
+        if (bottomNode is not Ground && AreNodesConnected(currentNode, bottomNode, Direction.North) && AreNodesConnected(bottomNode, currentNode, Direction.South))
         {
-            connectingPieces.Add(new(y + 1, x, bottomCell));
+            connectingPieces.Add(new(y + 1, x, bottomNode));
         }
 
-        if (leftCell is not Ground && AreCellsConnected(currentCell, leftCell, Direction.East) && AreCellsConnected(leftCell, currentCell, Direction.West))
+        if (leftNode is not Ground && AreNodesConnected(currentNode, leftNode, Direction.East) && AreNodesConnected(leftNode, currentNode, Direction.West))
         {
-            connectingPieces.Add(new(y, x - 1, leftCell));
+            connectingPieces.Add(new(y, x - 1, leftNode));
         }
 
-        if (rightCell is not Ground && AreCellsConnected(currentCell, rightCell, Direction.West) && AreCellsConnected(rightCell, currentCell, Direction.East))
+        if (rightNode is not Ground && AreNodesConnected(currentNode, rightNode, Direction.West) && AreNodesConnected(rightNode, currentNode, Direction.East))
         {
-            connectingPieces.Add(new(y, x + 1, rightCell));
+            connectingPieces.Add(new(y, x + 1, rightNode));
         }
 
         return connectingPieces;
@@ -312,7 +313,7 @@ internal partial class Program
         { StartingPosition, new() { Direction.North, Direction.South, Direction.West, Direction.East } }
     };
 
-    public static bool AreCellsConnected(string current, string next, Direction fromDirection)
+    public static bool AreNodesConnected(string current, string next, Direction fromDirection)
     {
         var hasValue = Map.TryGetValue(next, out var allowedDirection);
         return hasValue && allowedDirection!.Contains(fromDirection);
