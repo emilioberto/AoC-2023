@@ -1,16 +1,22 @@
 ﻿var filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "input.txt");
 
-long part1Result = 0;
-long part2Result = 0;
+int part1Result = 0;
+int part2Result = 0;
 
 var matrix = Array.Empty<string[]>();
+int? rowsPart2;
+int? rows;
+int? columns;
 await foreach (var line in File.ReadLinesAsync(filePath))
 {
     if (string.IsNullOrEmpty(line))
     {
-        var rows = CheckResult(matrix);
-        var columns = CheckResult(GetInvertedMatrix(matrix));
+        rows = CheckResult(matrix);
+        columns = CheckResult(GetInvertedMatrix(matrix));
         part1Result += (columns ?? 0) + (100 * (rows ?? 0));
+
+        rowsPart2 = CheckResult(matrix, true);
+        part2Result += 100 * rowsPart2!.Value;
 
         matrix = Array.Empty<string[]>();
         continue;
@@ -19,11 +25,15 @@ await foreach (var line in File.ReadLinesAsync(filePath))
     matrix = matrix.Append(line.ToCharArray().Select(e => e.ToString()).ToArray()).ToArray();
 }
 
-var rows2 = CheckResult(matrix);
-var columns2 = CheckResult(GetInvertedMatrix(matrix));
-part1Result += (columns2 ?? 0) + (100 * (rows2 ?? 0));
+rows = CheckResult(matrix);
+columns = CheckResult(GetInvertedMatrix(matrix));
+part1Result += (columns ?? 0) + (100 * (rows ?? 0));
+
+rowsPart2 = CheckResult(matrix, true);
+part2Result += 100 * rowsPart2!.Value;
 
 Console.WriteLine($"Part 1 result: {part1Result}");
+Console.WriteLine($"Part 1 result: {part2Result}");
 
 string[][] GetInvertedMatrix(string[][] matrix)
 {
@@ -46,9 +56,9 @@ string[][] GetInvertedMatrix(string[][] matrix)
 }
 
 
-int? CheckResult(string[][] matrix)
+int? CheckResult(string[][] matrix, bool isPart2 = false)
 {
-    var hashmap = new List<long>();
+    var hashMap = new List<long>();
     foreach (var row in matrix)
     {
         var result = 0L;
@@ -57,15 +67,21 @@ int? CheckResult(string[][] matrix)
             result += row[i] is "." ? (long)(Math.Pow(2, i)) : 0L;
         }
 
-        hashmap.Add(result);
+        hashMap.Add(result);
     }
 
     // EG: 306 331 252 252 331 307 330
     // Console.WriteLine(string.Join(" ", hashmap));
 
-    for (var i = 0; i < hashmap.Count - 1; i++)
+    if (isPart2)
     {
-        if (hashmap[i] == hashmap[i + 1] && CheckNeighbors(hashmap, i) is not null)
+        matrix = FixMatrix(matrix, hashMap);
+        return CheckResult(matrix);
+    }
+
+    for (var i = 0; i < hashMap.Count - 1; i++)
+    {
+        if (hashMap[i] == hashMap[i + 1] && CheckNeighbors(hashMap, i) is not null)
         {
             return i + 1;
         }
@@ -92,4 +108,48 @@ int? CheckNeighbors(List<long> hashMap, int index)
     }
 
     return index;
+}
+
+string[][] FixMatrix(string[][] matrix, List<long> hashMap)
+{
+    var rowsWithoutMatch = hashMap.Where((toFind, i) => hashMap.Count(hash => hash == toFind) == 1).ToArray();
+
+    for (int i = 0; i < hashMap.Count; i++)
+    {
+        for (int j = 0; j < hashMap.Count; j++)
+        {
+            var difference = GetRowDifference(matrix, i, j);
+            if (difference.Count(e => e != " ") == 1)
+            {
+                matrix[i] = matrix[j];
+                return matrix;
+            }
+        }
+    }
+
+    return matrix;
+}
+
+string[] GetRowDifference(string[][] strings, int offsetLeft1, int offsetRight1)
+{
+    var difference = strings[offsetLeft1].Select<string, string>((character, index) =>
+    {
+        if (character == strings[offsetRight1].ToArray()[index])
+        {
+            return " ";
+        }
+
+        return character;
+    }).ToArray();
+
+    return difference;
+}
+
+void PrintMatrix(string[][] strings)
+{
+    for (var y = 0; y < strings.Length; y++)
+    {
+        var row = strings[y];
+        Console.WriteLine(string.Join("", row.Select(s => s)));
+    }
 }
